@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontqrcode
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontqrcode
+  template:
+    metadata:
+      labels:
+        app: frontqrcode
+    spec:
+      containers:
+        - name: frontqrcode
+          image: {{ .Values.frontqrcode.repository }}:{{ .Values.frontqrcode.tag }}
+          ports:
+            - containerPort: {{ .Values.frontqrcode.port }}

@@ -1,0 +1,8 @@
+frontqrcode:
+  repository: rafaelvmasc/front-qrcode
+  tag: 0.3.0
+  pullPolicy: IfNotPresent
+  type: ClusterIP
+  port: 8080
+  domain: yeee.app
+  subdomain: qrcode

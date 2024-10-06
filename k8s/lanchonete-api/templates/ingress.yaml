@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: lanchonete-api-ingress
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - {{ .Values.api.subdomain }}.{{ .Values.api.domain }}
+      secretName: tls-secret-g41
+  rules:
+    - host: {{ .Values.api.subdomain }}.{{ .Values.api.domain }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: lanchonete-api
+                port:
+                  number: {{ .Values.service.port }}

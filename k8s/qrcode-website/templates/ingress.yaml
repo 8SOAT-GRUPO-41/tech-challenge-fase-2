@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: frontqrcode-ingress
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - {{ .Values.frontqrcode.subdomain }}.{{ .Values.frontqrcode.domain }}
+      secretName: tls-secret-g41-qrcode
+  rules:
+    - host: {{ .Values.frontqrcode.subdomain }}.{{ .Values.frontqrcode.domain }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontqrcode
+                port:
+                  number: {{ .Values.frontqrcode.port }}
