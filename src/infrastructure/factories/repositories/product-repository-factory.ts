@@ -3,5 +3,5 @@ import { ProductRepositoryPostgres } from '@/infrastructure/repository/postgres'
 import type { ProductRepository } from '@/application/ports'
 
 export const makeProductRepository = (): ProductRepository => {
-	return new ProductRepositoryPostgres(PostgresDatabaseConnection.getInstance())
+  return new ProductRepositoryPostgres(PostgresDatabaseConnection.getInstance())
 }

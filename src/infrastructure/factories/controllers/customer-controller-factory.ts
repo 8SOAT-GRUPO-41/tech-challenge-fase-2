@@ -3,9 +3,9 @@ import { makeCreateCustomer, makeLoadCustomerByCpf } from '@/infrastructure/fact
 import type { Controller } from '@/infrastructure/controllers/interfaces'
 
 export const makeLoadCustomerByCpfController = (): Controller => {
-	return new LoadCustomerByCpfController(makeLoadCustomerByCpf())
+  return new LoadCustomerByCpfController(makeLoadCustomerByCpf())
 }
 
 export const makeCreateCustomerController = (): Controller => {
-	return new CreateCustomerController(makeCreateCustomer())
+  return new CreateCustomerController(makeCreateCustomer())
 }

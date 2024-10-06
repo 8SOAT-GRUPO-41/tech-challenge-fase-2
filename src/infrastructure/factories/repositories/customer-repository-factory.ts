@@ -3,5 +3,5 @@ import { PostgresDatabaseConnection } from '@/infrastructure/database/postgres-c
 import type { CustomerRepository } from '@/application/ports'
 
 export const makeCustomerRepository = (): CustomerRepository => {
-	return new CustomerRepositoryPostgres(PostgresDatabaseConnection.getInstance())
+  return new CustomerRepositoryPostgres(PostgresDatabaseConnection.getInstance())
 }

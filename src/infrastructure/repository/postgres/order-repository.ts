@@ -1,31 +1,29 @@
-import type { OrderRepository } from "@/application/ports/order-repository";
-import { Customer, Order, Product } from "@/domain/entities";
-import { OrderItem } from "@/domain/entities/order-item";
-import type { OrderStatus, ProductCategory } from "@/domain/enums";
-import type { PostgresDatabaseConnection } from "@/infrastructure/database/postgres-connection";
+import type { OrderRepository } from '@/application/ports/order-repository'
+import { Customer, Order, Product } from '@/domain/entities'
+import { OrderItem } from '@/domain/entities/order-item'
+import { PaymentStatus, type OrderStatus, type ProductCategory } from '@/domain/enums'
+import type { PostgresDatabaseConnection } from '@/infrastructure/database/postgres-connection'
 
 interface OrderQueryResult {
-  order_id: string;
-  status: OrderStatus;
-  created_at: string;
-  customer_id: string;
-  customer_name: string;
-  email: string;
-  cpf: string;
+  order_id: string
+  status: OrderStatus
+  created_at: string
+  customer_id: string
+  customer_name: string
+  email: string
+  cpf: string
   products: Array<{
-    product_id: string;
-    product_name: string;
-    category: ProductCategory;
-    description: string;
-    item_price: string;
-    quantity: number;
-  }>;
+    product_id: string
+    product_name: string
+    category: ProductCategory
+    description: string
+    item_price: string
+    quantity: number
+  }>
 }
 
 export class OrderRepositoryPostgres implements OrderRepository {
-  constructor(
-    private readonly databaseConnection: PostgresDatabaseConnection
-  ) {}
+  constructor(private readonly databaseConnection: PostgresDatabaseConnection) {}
 
   async findAll(): Promise<Order[]> {
     const sql = `
@@ -58,8 +56,8 @@ export class OrderRepositoryPostgres implements OrderRepository {
 			GROUP BY
 				o.order_id, c.customer_id, o.status, o.created_at, c.name, c.email, c.cpf
 			ORDER BY
-				o.order_id;`;
-    const rows = await this.databaseConnection.query<OrderQueryResult>(sql);
+				o.order_id;`
+    const rows = await this.databaseConnection.query<OrderQueryResult>(sql)
     return rows.map((row) => {
       const orderItems = row.products.map((product) => {
         const orderItem = OrderItem.restore(
@@ -71,67 +69,54 @@ export class OrderRepositoryPostgres implements OrderRepository {
             product.description
           ),
           product.quantity
-        );
-        return orderItem;
-      });
+        )
+        return orderItem
+      })
       const order = Order.restore(
         row.order_id,
-        Customer.restore(
-          row.customer_id,
-          row.cpf,
-          row.customer_name,
-          row.email
-        ),
+        Customer.restore(row.customer_id, row.cpf, row.customer_name, row.email),
         orderItems,
-        row.status
-      );
-      return order;
-    });
+        row.status,
+        PaymentStatus.PENDING,
+        new Date(row.created_at)
+      )
+      return order
+    })
   }
 
   async save(order: Order): Promise<void> {
     await this.databaseConnection.transaction(async (client) => {
-      const insertOrdersQuery =
-        "INSERT INTO orders (order_id, customer_id, total, status) VALUES ($1, $2, $3, $4)";
+      const insertOrdersQuery = 'INSERT INTO orders (order_id, customer_id, total, status) VALUES ($1, $2, $3, $4)'
       await client.query(insertOrdersQuery, [
         order.orderId,
         order.getCustomer().customerId,
         order.getTotal(),
-        order.getStatus(),
-      ]);
-      const orderItems = order.getOrderItems();
-      const values: string[] = [];
-      const queryParams: unknown[] = [];
+        order.getStatus()
+      ])
+      const orderItems = order.getOrderItems()
+      const values: string[] = []
+      const queryParams: unknown[] = []
       orderItems.forEach((item, index) => {
-        const startIndex = index * 4 + 1;
-        values.push(
-          `($${startIndex}, $${startIndex + 1}, $${startIndex + 2}, $${
-            startIndex + 3
-          })`
-        );
-        queryParams.push(
-          order.orderId,
-          item.getProduct().productId,
-          item.getQuantity(),
-          item.getPrice()
-        );
-      });
+        const startIndex = index * 4 + 1
+        values.push(`($${startIndex}, $${startIndex + 1}, $${startIndex + 2}, $${startIndex + 3})`)
+        queryParams.push(order.orderId, item.getProduct().productId, item.getQuantity(), item.getPrice())
+      })
       const insertOrderProductsQuery = `INSERT INTO order_products (order_id, product_id, quantity, price) VALUES ${values.join(
-        ", "
-      )}`;
-      await client.query(insertOrderProductsQuery, queryParams);
-    });
+        ', '
+      )}`
+      await client.query(insertOrderProductsQuery, queryParams)
+    })
   }
 
   async update(order: Order): Promise<void> {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.')
   }
 
   async updateOrderStatus(order: Order): Promise<void> {
-    const sql = "UPDATE orders SET status = $1 WHERE order_id = $2";
-    const params = [order.getStatus(), order.orderId];
+    const sql = 'UPDATE orders SET status = $1 WHERE order_id = $2'
+    const params = [order.getStatus(), order.orderId]
 
-    await this.databaseConnection.query(sql, params);
+    await this.databaseConnection.query(sql, params)
   }
 
   async findById(orderId: string): Promise<Order | null> {
@@ -165,15 +150,12 @@ export class OrderRepositoryPostgres implements OrderRepository {
 	WHERE
 		o.order_id = $1
 	GROUP BY
-		o.order_id, c.customer_id, o.status, o.created_at, c.name, c.email, c.cpf`;
-    const params = [orderId];
-    const rows = await this.databaseConnection.query<OrderQueryResult>(
-      sql,
-      params
-    );
-    const row = rows.shift();
+		o.order_id, c.customer_id, o.status, o.created_at, c.name, c.email, c.cpf`
+    const params = [orderId]
+    const rows = await this.databaseConnection.query<OrderQueryResult>(sql, params)
+    const row = rows.shift()
     if (!row) {
-      return null;
+      return null
     }
 
     const orderItems = row.products.map((product) => {
@@ -186,15 +168,17 @@ export class OrderRepositoryPostgres implements OrderRepository {
           product.description
         ),
         product.quantity
-      );
-      return orderItem;
-    });
+      )
+      return orderItem
+    })
     const order = Order.restore(
       row.order_id,
       Customer.restore(row.customer_id, row.cpf, row.customer_name, row.email),
       orderItems,
-      row.status
-    );
-    return order;
+      row.status,
+      PaymentStatus.PENDING,
+      new Date(row.created_at)
+    )
+    return order
   }
 }

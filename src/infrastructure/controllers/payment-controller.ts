@@ -6,36 +6,36 @@ import type { UpdateOrderStatus } from '@/application/usecases/order'
 import type { CreatePayment } from '@/application/usecases/payment'
 
 interface FakeCheckoutInput {
-	orderId: string
-	status: OrderStatus
+  orderId: string
+  status: OrderStatus
 }
 
 interface CreatePaymentInput {
-	orderId: string
+  orderId: string
 }
 
 export class FakeCheckoutController implements Controller {
-	constructor(private readonly updateOrderUseCase: UpdateOrderStatus) {}
+  constructor(private readonly updateOrderUseCase: UpdateOrderStatus) {}
 
-	async handle(request: HttpRequest<FakeCheckoutInput>): Promise<HttpResponse> {
-		const input = request.body
-		const result = await this.updateOrderUseCase.execute(input)
-		return {
-			statusCode: HttpStatusCode.OK,
-			body: result.toJSON()
-		}
-	}
+  async handle(request: HttpRequest<FakeCheckoutInput>): Promise<HttpResponse> {
+    const input = request.body
+    const result = await this.updateOrderUseCase.execute(input)
+    return {
+      statusCode: HttpStatusCode.OK,
+      body: result.toJSON()
+    }
+  }
 }
 
 export class CreatePaymentController implements Controller {
-	constructor(private readonly createPaymentUseCase: CreatePayment) {}
+  constructor(private readonly createPaymentUseCase: CreatePayment) {}
 
-	async handle(request: HttpRequest): Promise<HttpResponse> {
-		const input = request.body as CreatePaymentInput
-		const qrCode = await this.createPaymentUseCase.execute(input)
-		return {
-			statusCode: HttpStatusCode.OK,
-			body: qrCode
-		}
-	}
+  async handle(request: HttpRequest): Promise<HttpResponse> {
+    const input = request.body as CreatePaymentInput
+    const qrCode = await this.createPaymentUseCase.execute(input)
+    return {
+      statusCode: HttpStatusCode.OK,
+      body: qrCode
+    }
+  }
 }

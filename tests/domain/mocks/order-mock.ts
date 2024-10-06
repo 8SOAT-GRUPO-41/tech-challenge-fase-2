@@ -9,10 +9,10 @@ export const paidMockOrder = Order.restore('order-id', customerMock, [orderItemM
 export const receivedMockOrder = Order.restore('order-id', customerMock, [orderItemMock], OrderStatus.RECEIVED)
 
 export const inPreparationMockOrder = Order.restore(
-	'order-id',
-	customerMock,
-	[orderItemMock],
-	OrderStatus.IN_PREPARATION
+  'order-id',
+  customerMock,
+  [orderItemMock],
+  OrderStatus.IN_PREPARATION
 )
 
 export const readyMockOrder = Order.restore('order-id', customerMock, [orderItemMock], OrderStatus.READY)
