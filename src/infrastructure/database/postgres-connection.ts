@@ -1,11 +1,12 @@
-import pg from 'pg'
+import { Pool, type PoolClient } from 'pg'
+import type { DatabaseConnection } from './database-connection'
 
-export class PostgresDatabaseConnection {
+export class PostgresDatabaseConnection implements DatabaseConnection {
   private static instance: PostgresDatabaseConnection | null = null
-  private pool: pg.Pool
+  private pool: Pool
 
-  constructor() {
-    this.pool = new pg.Pool({
+  private constructor() {
+    this.pool = new Pool({
       user: process.env.DB_USER,
       host: process.env.DB_HOST,
       database: process.env.DB_NAME,
@@ -14,7 +15,7 @@ export class PostgresDatabaseConnection {
     })
   }
 
-  static getInstance() {
+  static getInstance(): PostgresDatabaseConnection {
     if (!PostgresDatabaseConnection.instance) {
       PostgresDatabaseConnection.instance = new PostgresDatabaseConnection()
     }
@@ -28,14 +29,14 @@ export class PostgresDatabaseConnection {
       const result = await client.query(sql, params)
       return result.rows
     } catch (error) {
-      console.error(error)
+      console.error('Query error:', error)
       throw new Error('Error executing query')
     } finally {
       client.release()
     }
   }
 
-  async transaction<T>(fn: (client: pg.PoolClient) => Promise<T>): Promise<T> {
+  async transaction<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
     const client = await this.pool.connect()
     try {
       await client.query('BEGIN')

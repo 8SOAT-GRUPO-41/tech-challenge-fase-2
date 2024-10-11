@@ -2,7 +2,7 @@ import type { OrderRepository } from '@/application/ports/order-repository'
 import { Customer, Order, Product } from '@/domain/entities'
 import { OrderItem } from '@/domain/entities/order-item'
 import { PaymentStatus, type OrderStatus, type ProductCategory } from '@/domain/enums'
-import type { PostgresDatabaseConnection } from '@/infrastructure/database/postgres-connection'
+import type { DatabaseConnection } from '@/infrastructure/database/database-connection'
 
 interface OrderQueryResult {
   order_id: string
@@ -22,41 +22,41 @@ interface OrderQueryResult {
   }>
 }
 
-export class OrderRepositoryPostgres implements OrderRepository {
-  constructor(private readonly databaseConnection: PostgresDatabaseConnection) {}
+export class OrderRepositoryDatabase implements OrderRepository {
+  constructor(private readonly databaseConnection: DatabaseConnection) {}
 
   async findAll(): Promise<Order[]> {
     const sql = `
-			SELECT
-				o.order_id,
-				o.status,
-				o.created_at,
-				c.customer_id,
-				c.name AS customer_name,
-				c.email,
-				c.cpf,
-				JSON_AGG(
-					JSON_BUILD_OBJECT(
-						'product_id', p.product_id,
-						'product_name', p.name,
-						'category', p.category,
-						'description', p.description,
-						'item_price', p.price,
-						'quantity', op.quantity
-					)
-				) AS products
-			FROM
-				orders o
-			JOIN 
-				customers c ON o.customer_id = c.customer_id
-			JOIN 
-				order_products op ON o.order_id = op.order_id
-			JOIN 
-				products p ON op.product_id = p.product_id
-			GROUP BY
-				o.order_id, c.customer_id, o.status, o.created_at, c.name, c.email, c.cpf
-			ORDER BY
-				o.order_id;`
+      SELECT
+        o.order_id,
+        o.status,
+        o.created_at,
+        c.customer_id,
+        c.name AS customer_name,
+        c.email,
+        c.cpf,
+        JSON_AGG(
+          JSON_BUILD_OBJECT(
+            'product_id', p.product_id,
+            'product_name', p.name,
+            'category', p.category,
+            'description', p.description,
+            'item_price', p.price,
+            'quantity', op.quantity
+          )
+        ) AS products
+      FROM
+        orders o
+      JOIN 
+        customers c ON o.customer_id = c.customer_id
+      JOIN 
+        order_products op ON o.order_id = op.order_id
+      JOIN 
+        products p ON op.product_id = p.product_id
+      GROUP BY
+        o.order_id, c.customer_id, o.status, o.created_at, c.name, c.email, c.cpf
+      ORDER BY
+        o.order_id;`
     const rows = await this.databaseConnection.query<OrderQueryResult>(sql)
     return rows.map((row) => {
       const orderItems = row.products.map((product) => {
@@ -121,36 +121,36 @@ export class OrderRepositoryPostgres implements OrderRepository {
 
   async findById(orderId: string): Promise<Order | null> {
     const sql = `
-	SELECT
-		o.order_id,
-		o.status,
-		o.created_at,
-		c.customer_id,
-		c.name AS customer_name,
-		c.email,
-		c.cpf,
-		JSON_AGG(
-			JSON_BUILD_OBJECT(
-				'product_id', p.product_id,
-				'product_name', p.name,
-				'category', p.category,
-				'description', p.description,
-				'item_price', p.price,
-				'quantity', op.quantity
-			)
-		) AS products
-	FROM
-		orders o
-	JOIN 
-		customers c ON o.customer_id = c.customer_id
-	JOIN 
-		order_products op ON o.order_id = op.order_id
-	JOIN 
-		products p ON op.product_id = p.product_id
-	WHERE
-		o.order_id = $1
-	GROUP BY
-		o.order_id, c.customer_id, o.status, o.created_at, c.name, c.email, c.cpf`
+      SELECT
+        o.order_id,
+        o.status,
+        o.created_at,
+        c.customer_id,
+        c.name AS customer_name,
+        c.email,
+        c.cpf,
+        JSON_AGG(
+          JSON_BUILD_OBJECT(
+            'product_id', p.product_id,
+            'product_name', p.name,
+            'category', p.category,
+            'description', p.description,
+            'item_price', p.price,
+            'quantity', op.quantity
+          )
+        ) AS products
+      FROM
+        orders o
+      JOIN 
+        customers c ON o.customer_id = c.customer_id
+      JOIN 
+        order_products op ON o.order_id = op.order_id
+      JOIN 
+        products p ON op.product_id = p.product_id
+      WHERE
+        o.order_id = $1
+      GROUP BY
+        o.order_id, c.customer_id, o.status, o.created_at, c.name, c.email, c.cpf`
     const params = [orderId]
     const rows = await this.databaseConnection.query<OrderQueryResult>(sql, params)
     const row = rows.shift()

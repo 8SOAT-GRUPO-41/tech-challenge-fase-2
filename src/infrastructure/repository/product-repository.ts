@@ -1,10 +1,10 @@
 import type { ProductRepository } from '@/application/ports/product-repository'
 import { Product } from '@/domain/entities'
 import type { ProductCategory } from '@/domain/enums'
-import type { PostgresDatabaseConnection } from '@/infrastructure/database/postgres-connection'
+import type { DatabaseConnection } from '@/infrastructure/database/database-connection'
 
-export class ProductRepositoryPostgres implements ProductRepository {
-  constructor(private readonly databaseConnection: PostgresDatabaseConnection) {}
+export class ProductRepositoryDatabase implements ProductRepository {
+  constructor(private readonly databaseConnection: DatabaseConnection) {}
 
   async save(product: Product) {
     const sql = 'INSERT INTO products (product_id, name, price, description, category) VALUES ($1, $2, $3, $4, $5)'

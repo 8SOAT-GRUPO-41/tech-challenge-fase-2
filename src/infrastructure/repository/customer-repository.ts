@@ -1,9 +1,9 @@
 import type { CustomerRepository } from '@/application/ports/customer-repository'
 import { Customer } from '@/domain/entities'
-import type { PostgresDatabaseConnection } from '../../database/postgres-connection'
+import type { DatabaseConnection } from '@/infrastructure/database/database-connection'
 
-export class CustomerRepositoryPostgres implements CustomerRepository {
-  constructor(private readonly databaseConnection: PostgresDatabaseConnection) {}
+export class CustomerRepositoryDatabase implements CustomerRepository {
+  constructor(private readonly databaseConnection: DatabaseConnection) {}
 
   async save(customer: Customer): Promise<void> {
     const sql = 'INSERT INTO customers (customer_id, name, email, cpf) VALUES ($1, $2, $3, $4)'
