@@ -1,11 +1,12 @@
 import type { OrderRepository } from '@/application/ports/order-repository'
 import { Customer, Order, Product } from '@/domain/entities'
 import { OrderItem } from '@/domain/entities/order-item'
-import { PaymentStatus, type OrderStatus, type ProductCategory } from '@/domain/enums'
+import type { PaymentStatus, OrderStatus, ProductCategory } from '@/domain/enums'
 import type { DatabaseConnection } from '@/infrastructure/database/database-connection'
 
 interface OrderQueryResult {
   order_id: string
+  payment_status: PaymentStatus
   status: OrderStatus
   created_at: string
   customer_id: string
@@ -30,6 +31,7 @@ export class OrderRepositoryDatabase implements OrderRepository {
       SELECT
         o.order_id,
         o.status,
+        o.payment_status,
         o.created_at,
         c.customer_id,
         c.name AS customer_name,
@@ -77,7 +79,7 @@ export class OrderRepositoryDatabase implements OrderRepository {
         Customer.restore(row.customer_id, row.cpf, row.customer_name, row.email),
         orderItems,
         row.status,
-        PaymentStatus.PENDING,
+        row.payment_status,
         new Date(row.created_at)
       )
       return order
@@ -86,12 +88,14 @@ export class OrderRepositoryDatabase implements OrderRepository {
 
   async save(order: Order): Promise<void> {
     await this.databaseConnection.transaction(async (client) => {
-      const insertOrdersQuery = 'INSERT INTO orders (order_id, customer_id, total, status) VALUES ($1, $2, $3, $4)'
+      const insertOrdersQuery =
+        'INSERT INTO orders (order_id, customer_id, total, status, payment_status) VALUES ($1, $2, $3, $4, $5)'
       await client.query(insertOrdersQuery, [
         order.orderId,
         order.getCustomer().customerId,
         order.getTotal(),
-        order.getStatus()
+        order.getStatus(),
+        order.getPaymentStatus()
       ])
       const orderItems = order.getOrderItems()
       const values: string[] = []
@@ -109,7 +113,9 @@ export class OrderRepositoryDatabase implements OrderRepository {
   }
 
   async update(order: Order): Promise<void> {
-    throw new Error('Method not implemented.')
+    const updateOrderSql = 'UPDATE orders SET status = $1, payment_status = $2 WHERE order_id = $3'
+    const updateOrderParams = [order.getStatus(), order.getPaymentStatus(), order.orderId]
+    await this.databaseConnection.query(updateOrderSql, updateOrderParams)
   }
 
   async updateOrderStatus(order: Order): Promise<void> {
@@ -124,6 +130,7 @@ export class OrderRepositoryDatabase implements OrderRepository {
       SELECT
         o.order_id,
         o.status,
+        o.payment_status,
         o.created_at,
         c.customer_id,
         c.name AS customer_name,
@@ -176,7 +183,7 @@ export class OrderRepositoryDatabase implements OrderRepository {
       Customer.restore(row.customer_id, row.cpf, row.customer_name, row.email),
       orderItems,
       row.status,
-      PaymentStatus.PENDING,
+      row.payment_status,
       new Date(row.created_at)
     )
     return order

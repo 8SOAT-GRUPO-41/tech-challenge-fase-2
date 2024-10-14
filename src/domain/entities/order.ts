@@ -61,6 +61,10 @@ export class Order {
 
   getOrderDate = () => this.orderDate
 
+  setPaymentStatus = (paymentStatus: PaymentStatus) => {
+    this.paymentStatus = paymentStatus
+  }
+
   private canTransitionTo(status: OrderStatus): boolean {
     const transitions: Record<OrderStatus, OrderStatus[]> = {
       [OrderStatus.AWAITING_PAYMENT]: [OrderStatus.PAID],

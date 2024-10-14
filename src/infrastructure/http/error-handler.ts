@@ -1,5 +1,5 @@
 import { HttpStatusCode } from '@/infrastructure/http/helper'
-import { DomainError, NotFoundError, InvalidParamError, ConflictError } from '@/domain/errors'
+import { DomainError, NotFoundError, InvalidParamError, ConflictError, ExternalApiError } from '@/domain/errors'
 import { ErrorCodes } from '@/domain/enums'
 import type { HttpResponse } from '@/infrastructure/http/interfaces'
 
@@ -27,6 +27,10 @@ export class HttpErrorHandler {
 
     if (error instanceof ConflictError) {
       return this.createErrorResponse(error.code, error.message, HttpStatusCode.CONFLICT)
+    }
+
+    if (error instanceof ExternalApiError) {
+      return this.createErrorResponse(error.code, error.message, HttpStatusCode.SERVER_ERROR)
     }
 
     return this.createErrorResponse(

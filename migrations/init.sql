@@ -7,6 +7,12 @@ CREATE TYPE order_status AS ENUM (
     'COMPLETED'
 );
 
+CREATE TYPE payment_status AS ENUM (
+    'PENDING',
+    'PAID',
+    'CANCELED'
+);
+
 CREATE TYPE product_category AS ENUM (
     'Lanche',
     'Acompanhamento',
@@ -30,6 +36,7 @@ CREATE TABLE "orders" (
     "customer_id" TEXT NOT NULL,
     "total" DECIMAL(10, 2) NOT NULL,
     "status" order_status NOT NULL,
+    "payment_status" payment_status NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "orders_pkey" PRIMARY KEY ("order_id"),

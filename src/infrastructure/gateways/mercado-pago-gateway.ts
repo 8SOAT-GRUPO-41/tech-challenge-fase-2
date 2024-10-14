@@ -1,25 +1,28 @@
-import type { PaymentGateway } from '@/application/ports'
-import axios, { type AxiosInstance } from 'axios'
+import type { GetPaymentDetailsOutput, PaymentGateway } from '@/application/ports'
+import { PaymentStatus } from '@/domain/enums'
+import { ExternalApiError } from '@/domain/errors'
+import axios, { type AxiosError, type AxiosInstance } from 'axios'
 
 interface MercadoPagoCreatePaymentResponse {
   qr_data: string
 }
 
+type MercadoPagoPaymentStatus =
+  | 'approved'
+  | 'pending'
+  | 'authorized'
+  | 'in_process'
+  | 'in_mediation'
+  | 'rejected'
+  | 'cancelled'
+  | 'refunded'
+  | 'charged_back'
+
 interface MercadoPagoPaymentDetailsResponse {
   external_reference: string
-  status:
-    | 'approved'
-    | 'pending'
-    | 'authorized'
-    | 'in_process'
-    | 'in_mediation'
-    | 'rejected'
-    | 'cancelled'
-    | 'refunded'
-    | 'charged_back'
+  status: MercadoPagoPaymentStatus
 }
 
-// TODO: implement error handling
 export class MercadoPagoGateway implements PaymentGateway {
   private readonly mercadoPagoInstance: AxiosInstance
   private readonly mercadoPagoUserId: string
@@ -47,7 +50,7 @@ export class MercadoPagoGateway implements PaymentGateway {
           external_reference: input.orderId,
           title: 'LG41-Combo',
           description: 'Combo LG41',
-          notification_url: 'https://2f53-177-68-169-92.ngrok-free.app',
+          notification_url: process.env.PAYMENT_WEBHOOK_URL,
           total_amount: input.totalAmount,
           items: [
             {
@@ -65,20 +68,46 @@ export class MercadoPagoGateway implements PaymentGateway {
       return response.data.qr_data
     } catch (error) {
       console.error(error)
-      throw error
+      throw new ExternalApiError(
+        'Error generating payment QR code with Mercado Pago',
+        `/instore/orders/qr/seller/collectors/${this.mercadoPagoUserId}/pos/${this.mercadoPagoExternalPosId}/qrs`,
+        'POST',
+        (error as AxiosError).response?.status || 500
+      )
     }
   }
 
-  // TODO: update types
-  async getPaymentDetails(paymentId: string): Promise<any> {
+  async getPaymentDetails(gatewayResourceId: string): Promise<GetPaymentDetailsOutput> {
     try {
       const response = await this.mercadoPagoInstance.get<MercadoPagoPaymentDetailsResponse>(
-        `/v1/payments/${paymentId}`
+        `/v1/payments/${gatewayResourceId}`
       )
-      return response.data
+      return {
+        orderId: response.data.external_reference,
+        paymentStatus: this.convertPaymentStatus(response.data.status)
+      }
     } catch (error) {
       console.error(error)
-      throw error
+      throw new ExternalApiError(
+        'Error getting payment details from Mercado Pago',
+        `/v1/payments/${gatewayResourceId}`,
+        'GET',
+        (error as AxiosError).response?.status || 500
+      )
+    }
+  }
+
+  private convertPaymentStatus(mercadoPagoPaymentStatus: MercadoPagoPaymentStatus): PaymentStatus {
+    switch (mercadoPagoPaymentStatus) {
+      case 'approved':
+        return PaymentStatus.PAID
+      case 'pending':
+        return PaymentStatus.PENDING
+      case 'rejected':
+      case 'cancelled':
+        return PaymentStatus.CANCELED
+      default:
+        return PaymentStatus.CANCELED
     }
   }
 }

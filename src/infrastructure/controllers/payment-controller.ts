@@ -3,7 +3,7 @@ import type { HttpRequest, HttpResponse } from '@/infrastructure/http/interfaces
 import type { Controller } from '@/infrastructure/controllers/interfaces'
 import type { OrderStatus } from '@/domain/enums'
 import type { UpdateOrderStatus } from '@/application/usecases/order'
-import type { CreatePayment } from '@/application/usecases/payment'
+import type { CreatePayment, ProcessPaymentWebhook } from '@/application/usecases/payment'
 
 interface FakeCheckoutInput {
   orderId: string
@@ -36,6 +36,27 @@ export class CreatePaymentController implements Controller {
     return {
       statusCode: HttpStatusCode.OK,
       body: qrCode
+    }
+  }
+}
+
+export class PaymentWebhookController implements Controller {
+  constructor(private readonly processPaymentWebhookUseCase: ProcessPaymentWebhook) {}
+
+  async handle(request: HttpRequest): Promise<HttpResponse> {
+    const input = request.body as { data: { id: string }; type?: string }
+    if (!input.data?.id && input.type !== 'payment') {
+      return {
+        statusCode: HttpStatusCode.NO_CONTENT,
+        body: null
+      }
+    }
+    await this.processPaymentWebhookUseCase.execute({
+      gatewayResourceId: input.data.id
+    })
+    return {
+      statusCode: HttpStatusCode.NO_CONTENT,
+      body: null
     }
   }
 }
