@@ -5,4 +5,4 @@ frontqrcode:
   type: ClusterIP
   port: 8080
   domain: yeee.app
-  subdomain: qrcode
+  subdomain: qr

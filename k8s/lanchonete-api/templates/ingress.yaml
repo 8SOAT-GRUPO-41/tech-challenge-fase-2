@@ -20,4 +20,4 @@ spec:
               service:
                 name: lanchonete-api
                 port:
-                  number: {{ .Values.service.port }}
+                  number: {{ .Values.api.service.port }}

@@ -3,8 +3,8 @@ kind: Service
 metadata:
   name: lanchonete-api
 spec:
-  type: {{ .Values.service.type }}
+  type: {{ .Values.api.service.type }}
   ports:
-    - port: {{ .Values.service.port }}
+    - port: {{ .Values.api.service.port }}
   selector:
     app: lanchonete-api
