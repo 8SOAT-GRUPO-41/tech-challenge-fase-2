@@ -1,21 +1,24 @@
 api:
   repository: rafaelvmasc/lanchonete-api
-  tag: 5.0.0
+  tag: 2.0.0
   pullPolicy: IfNotPresent
   domain: yeee.app
   subdomain: lanchonete
-
-service:
-  type: ClusterIP
-  port: 3000
-
-nodeEnv:
-  DB_USER: postgres
-  DB_PASSWORD: postgres
-  DB_NAME: lanchonete
-  DB_HOST: postgres
-  DB_PORT: 5432
-  PORT: 3000
+  env:
+    DB_USER: postgres
+    DB_PASSWORD: postgres
+    DB_NAME: lanchonete
+    DB_HOST: postgres
+    DB_PORT: 5432
+    PORT: 3000
+    MERCADO_PAGO_API_URL: https://api.mercadopago.com
+    MERCADO_PAGO_ACCESS_TOKEN: CHANGE_ME
+    MERCADO_PAGO_USER_ID: "CHANGE_ME"
+    MERCADO_PAGO_EXTERNAL_POS_ID: CHANGE_ME
+    PAYMENT_WEBHOOK_URL: https://lanchonete.yeee.app/payments/webhook
+  service:
+    type: ClusterIP
+    port: 3000
 
 autoscaling:
   enabled: true
