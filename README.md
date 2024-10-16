@@ -25,3 +25,7 @@ docker-compose up
 ## Arquitetura
 
 ![Arquitetura](diagrams/k8s-architecture.png)
+
+## Link do Vídeo
+
+[Assista ao vídeo](https://youtu.be/aS6Rowws_KU)
